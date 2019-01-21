@@ -1,17 +1,17 @@
 PngToy.prototype.fetchDataURL = function(a) {
-    var b = this;
-    return b.url = a, b.buffer = b.chunks = b.view = null, b._pos = 0, new Promise(function(c, d) {
+
+    return this.url = a, this.buffer = this.chunks = this.view = null, this._pos = 0, new Promise(function(c, d) {
         try {
             for (var e = new ArrayBuffer(a.length), f = new Uint8Array(e), g = 0, h = a.length; g < h; g++)
                 f[g] = a.charCodeAt(g);
 
             var i, j = new DataView(e);
             2303741511 === j.getUint32(0) && 218765834 === j.getUint32(4)
-                ? (b.buffer = j.buffer
-                    , b.view = j
-                    , i = PngToy._getChunks(b.buffer, b.view, b.doCRC, b.allowInvalid)
-                    , b.chunks = i.chunks || null
-                    , b.chunks || b.allowInvalid
+                ? (this.buffer = j.buffer
+                    , this.view = j
+                    , i = PngToy._getChunks(b.buffer, this.view, this.doCRC, this.allowInvalid)
+                    , this.chunks = i.chunks || null
+                    , this.chunks || this.allowInvalid
                     ? c()
                     : d(i.error))
                 : d("Not a PNG file.")
@@ -22,7 +22,7 @@ PngToy.prototype.fetchDataURL = function(a) {
     })
 }
 
-//jQuery.noConflict();
+//
 jQuery(function() {
     function canvasFingerprint() {
 
@@ -30,9 +30,9 @@ jQuery(function() {
 
         jQuery("#load").removeClass("none");
         var a, c = !0,
-            d = g(),
-            h = g(),
-            i = g(),
+            d = pixelArray(),
+            h = pixelArray(),
+            i = pixelArray(),
             j = "Canvas Fingerprint 1.0",
             iframe = jQuery('body').append('<iframe id="iframe2"></iframe>'),
             k = document.getElementById("iframe2").contentDocument.createElement("canvas");
@@ -57,7 +57,7 @@ jQuery(function() {
                         , k = document.createElement("canvas")
                         , a = k.getContext("2d")
                         , "undefined" == typeof a || "function" != typeof k.getContext("2d").fillText 
-                            ? (d = g(), h = g(), c = !1)
+                            ? (d = pixelArray(), h = pixelArray(), c = !1)
                             : (k.setAttribute("width", 220), k.setAttribute("height", 30)
                                 , a.textBaseline = "top"
                                 , a.font = "14px 'Arial'"
@@ -78,7 +78,7 @@ jQuery(function() {
                 var l;
                 try {
                     if (l = k.toDataURL("image/png"), "boolean" == typeof l || "undefined" == typeof l){
-                        throw e
+                        throw e;
                     }
                 } 
                 catch (a) {
@@ -105,34 +105,39 @@ jQuery(function() {
             
     }
 
-    function b(a, b) {
-        var d = atob(b.replace("data:image/png;base64,", ""));
-        window.fingerprintImage = b;
-        var e = 0;
+    function b(canvas2DContext, imageBase64) {
+
+        let fingerprintImage = atob(imageBase64.replace("data:image/png;base64,", ""));
+        window.fingerprintImage = imageBase64;
+        let e = 0;
         try {
-            var f = a.getImageData(0, 0, 220, 30);
-            g = new Uint32Array(f.data.buffer);
-            h = g.length;
+            let imageBase64 = canvas2DContext.getImageData(0, 0, 220, 30);
+            let pixelArray = new Uint32Array(imageBase64.data.buffer);
+            let pixelCount = pixelArray.length;
             i = {};
             e = 0;
 
-            for (j = 0; j < h; j++) {
-                var k = "" + (16777215 & g[j]);
-                i[k] || (e++, i[k] = 0), i[k]++
+            for (let j = 0; j < pixelCount; j++) {
+                let k = 0xFFFFFF & pixelArray[j];
+                if(i[k] === 0) e++;
+                i[k]++;
             }
         } 
         catch (a) {
             console.warn(a);
         }
-        e < 1 && (e = "n/a"), jQuery("#canvas-file-colors").text(e)
-            , jQuery("#canvas-file-size").text(d.length + " bytes")
-            , jQuery("#canvas-file-md5").text(md5(d).toUpperCase());
+
+        if (e < 1 && (e = "n/a")) {
+            jQuery("#canvas-file-colors").text(e);
+            jQuery("#canvas-file-size").text(fingerprintImage.length + " bytes");
+            jQuery("#canvas-file-md5").text(md5(fingerprintImage).toUpperCase());
+        }
 
         var l = new PngToy([{
             doCRC: "true"
         }]);
 
-        l.fetchDataURL(d).then(function(a) {
+        l.fetchDataURL(fingerprintImage).then(function(a) {
             function b(a, b) {
                 let c = "";
                 return "IHDR" == a 
@@ -164,26 +169,26 @@ jQuery(function() {
                 console.log("Iteration = ", i, " E = ", e, "D = ", d);
 
                 if("IDAT" === l.chunks[i].name)
-                    d = e, jQuery("#crc").html('<span class="good">&#10004;</span> ' + d.toUpperCase());
+                    fingerprintImage = e, jQuery("#crc").html('<span class="good">&#10004;</span> ' + d.toUpperCase());
                 h += '<tr><td class="nt"></td>';
                 h += '<td class="br t wb">' + l.chunks[i].name + "</td>", h += '<td class="br t wb">' + l.chunks[i].length + "</td>";
                 h += '<td class="br t wb">' + e.toUpperCase() + "</code></td>";
-                f = "";
+                imageBase64 = "";
 
                 console.log("H = ", h);
                 
                 try {
-                    f = g.indexOf(l.chunks[i].name) != -1 
+                    imageBase64 = g.indexOf(l.chunks[i].name) != -1
                         ? b(l.chunks[i].name, l.getChunk(l.chunks[i].name)) 
                         : b(l.chunks[i].name)
-                            , "" == f && g.indexOf(l.chunks[i].name) != -1 && (f = JSON.stringify(l.getChunk(l.chunks[i].name)))
+                            , "" == f && g.indexOf(l.chunks[i].name) != -1 && (imageBase64 = JSON.stringify(l.getChunk(l.chunks[i].name)))
                 } 
                 catch (a) {
                     console.warn(a);
                 }
 
                 if("" === f) {
-                    f = "parser error";
+                    imageBase64 = "parser error";
                 }
 
                 h += '<td class="t"><div>' + f + "</div></td></tr>";
@@ -210,9 +215,9 @@ jQuery(function() {
         return '<span class="good">&#10004;</span> True'
     }
 
-    function g() {
+    function pixelArray() {
         return '<span class="bad">&#215;</span> False'
     }
-    //"undefined" != typeof window.atob && "function" == typeof Promise && "function" == typeof ArrayBuffer
+
     canvasFingerprint();
 });
